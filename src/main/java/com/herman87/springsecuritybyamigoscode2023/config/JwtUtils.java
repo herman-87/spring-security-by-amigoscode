@@ -7,13 +7,16 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 @Component
 public class JwtUtils {
 
     private final String jwtSigningKey = "secret";
+    public static final long    JWT_TOKEN_VALIDITY  = 5 * 60 * 60;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -30,6 +33,11 @@ public class JwtUtils {
         return claims.get(claimName) != null;
     }
 
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(jwtSigningKey)
@@ -42,6 +50,11 @@ public class JwtUtils {
     }
 
     public String generateToken(UserDetails userDetails, Map<String, Object> claims) {
+        return createToken(claims, userDetails);
+    }
+
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
         return createToken(claims, userDetails);
     }
 
